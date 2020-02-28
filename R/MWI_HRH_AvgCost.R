@@ -3,7 +3,7 @@
 ## LICENSE:  MIT
 ## PURPOSE:  compare HRH inventory
 ## DATE:     2020-02-24
-## UPDATED:  
+## UPDATED:  2020-02-26
 
 
 
@@ -281,4 +281,47 @@
            caption = "Source: Malawi DHA FY18-20, FY19 Malawi HRH Inventory") +
       theme(plot.caption = element_text(color = "gray30", size = 10))
    
-    g
+####
+    
+    
+    df_hrh_all_psnu <- df_hrh %>%
+      filter(staff.fundedby_pepfar > 0) %>% 
+      select(-starts_with("staff")) %>%
+      group_by(psnu) %>% 
+      summarise_if(is.numeric, sum, na.rm = TRUE) %>% 
+      ungroup() %>% 
+      gather(type, val, -psnu, na.rm = TRUE) %>% 
+      filter(val > 0, val < 7000000) %>% 
+      separate(type, c("type", NA), sep = "\\.") %>%
+      group_by(psnu, type) %>% 
+      summarise_at(vars(val), sum, na.rm = TRUE) %>% 
+      ungroup()
+    
+    df_dha_psnu <- df_dha %>% 
+      group_by(psnu, type = indicator) %>% 
+      summarize(val = sum(tx_curr, na.rm = TRUE)) %>% 
+      ungroup()
+    
+    df_psnu_agg <- bind_rows(df_hrh_all_psnu, df_dha_psnu) %>% 
+      mutate(type = case_when(type == "amt" ~ "Total HRH Exp.",
+                              type == "workers" ~ "Total HRH Staff",
+                              type == "TX_CURR" ~ "Curr. on Tx"),
+             type = factor(type, c("Curr. on Tx", "Total HRH Staff", "Total HRH Exp."))) %>% 
+      spread(type, val) %>% 
+      arrange(`Curr. on Tx`) %>% 
+      mutate(psnu = as_factor(psnu)) %>% 
+      gather(type, val, -psnu)
+
+    
+    df_psnu_agg %>% 
+      ggplot(aes(psnu, val, fill = type)) +
+      geom_col() +
+      coord_flip() +
+      facet_wrap(. ~ type, scales = "free_x") +
+      labs(x = "", y = "",
+           title = " FY19 TX_CURR RESULTS AGAINST HRH STAFFING AND EXPENDITURES",
+           caption = "Source: Malawi DHA FY18-20, FY19 Malawi HRH Inventory") +
+      scale_y_continuous(labels = comma) +
+      scale_fill_manual(values = pal) +
+      theme(legend.position = "none")
+``    

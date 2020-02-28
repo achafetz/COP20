@@ -4,7 +4,7 @@
 ## PURPOSE: recalculating NET NEW
 ## NOTE:    building off work from Fy19AgencySelfAssessments/Fy19Q4i_TZA_NET_NEW_Adjustment.R
 ## DATE:    2020-02-23
-## UPDATED: 2020-02-26
+## UPDATED: 2020-02-28
 
 
 
@@ -23,20 +23,29 @@ library(extrafont)
     myuser <- ""
     baseurl <- "https://www.datim.org/"
   
+  #site level and OU uid in Tanzania
+  ou_name <- "Tanzania"
+  ou_uid <- identify_ouuids(myuser, mypwd(myuser)) %>% 
+    filter(displayName == ou_name) %>% 
+    pull(id)
+  
+  ou_site_lvl <- identify_levels(ou_name, myuser, mypwd(myuser)) %>% 
+    pull(facility)
+  
   #API url 
   url <- 
     paste0(baseurl,
-      "api/29/analytics.json?",
-      "dimension=ou:LEVEL-7;mdXu6iCbn2G&", 
-      "dimension=bw8KHXzxd9i:FPUgmtt8HRi;NLV6dy7BE2O&", #Funding Agency - CDC and USAID
-      "dimension=SH885jaRe0o&", #Funding Mechanism
-      "dimension=pe:2017Q3;2017Q4;2018Q1;2018Q2;2018Q3;2018Q4;2019Q1;2019Q2;2019Q3;2019Q4&",
-      "dimension=LxhLO68FcXm:MvszPTQrUhy&", #technical area: TX_CURR
-      "dimension=IeMmjHyBUpi:Jh0jDM5yQ2E&", #Targets / Results: Results
-      "dimension=RUkVjD3BsS1:PE5QVF0w4xj&",  #Top Level Numerator
-      "displayProperty=SHORTNAME&skipMeta=false&hierarchyMeta=true"
+           "api/29/analytics.json?",
+           paste0("dimension=ou:LEVEL-",ou_site_lvl,";",ou_uid,"&"), 
+           "dimension=bw8KHXzxd9i:FPUgmtt8HRi;NLV6dy7BE2O&", #Funding Agency - CDC and USAID
+           "dimension=SH885jaRe0o&", #Funding Mechanism
+           "dimension=pe:2017Q3;2017Q4;2018Q1;2018Q2;2018Q3;2018Q4;2019Q1;2019Q2;2019Q3;2019Q4&",
+           "dimension=LxhLO68FcXm:MvszPTQrUhy&", #technical area: TX_CURR
+           "dimension=IeMmjHyBUpi:Jh0jDM5yQ2E&", #Targets / Results: Results
+           "dimension=RUkVjD3BsS1:PE5QVF0w4xj&",  #Top Level Numerator
+           "displayProperty=SHORTNAME&skipMeta=false&hierarchyMeta=true"
     )
-  
+    
   
   #pull site TX_CURR data
     df_site_tx <- get_datim_targets(url, myuser, mypwd(myuser))
