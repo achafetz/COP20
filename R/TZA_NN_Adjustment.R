@@ -36,7 +36,7 @@ library(extrafont)
   url <- 
     paste0(baseurl,
            "api/29/analytics.json?",
-           paste0("dimension=ou:LEVEL-",ou_site_lvl,";",ou_uid,"&"), 
+           paste0("dimension=ou:LEVEL-",ou_site_lvl,";",ou_uid,"&"), #OU and site level
            "dimension=bw8KHXzxd9i:FPUgmtt8HRi;NLV6dy7BE2O&", #Funding Agency - CDC and USAID
            "dimension=SH885jaRe0o&", #Funding Mechanism
            "dimension=pe:2017Q3;2017Q4;2018Q1;2018Q2;2018Q3;2018Q4;2019Q1;2019Q2;2019Q3;2019Q4&",
@@ -127,7 +127,7 @@ library(extrafont)
   #clean agencies
     df_site_tx_clean <- df_site_tx_clean %>% 
       mutate(fundingagency = str_remove(fundingagency, "HHS/"),
-             fundingagency = factor(fundingagency, c("CDC","USAID", "DOD")))
+             fundingagency = factor(fundingagency, c("CDC","USAID")))
     
     
   #add in partner and mech names
