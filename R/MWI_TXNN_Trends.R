@@ -102,12 +102,15 @@ df_msd <- read_excel(path, sheet = "MSD-TX-Age-Sex")
       summarise_at(vars(starts_with("TX")), sum, na.rm = TRUE) %>% 
       ungroup()
     
-    #order by TX_CURR value in FY20
+  #order by TX_CURR value in FY20
     df_combo <- df_combo %>% 
       filter(!is.na(primepartner)) %>% #no match for St Mary's Chisumulu Health Centre
       mutate(fy20q1_tx_curr = case_when(period == "FY20Q1" ~ TX_CURR),
-             primepartner = ifelse(primepartner == "Project Concern International", "PCI", primepartner),
-             primepartner = fct_reorder(primepartner, fy20q1_tx_curr, sum, na.rm = TRUE, .desc = TRUE))
+             primepartner = case_when(primepartner == "Project Concern International" ~ "PCI", 
+                                      primepartner == "Lighthouse/Baylor TSP" ~ "Lighthouse/\nBaylor TSP", 
+                                      TRUE ~ primepartner),
+             primepartner = fct_reorder(primepartner, fy20q1_tx_curr, sum, na.rm = TRUE, .desc = TRUE)) %>% 
+      select(-fy20q1_tx_curr)
   
 
 # PLOT --------------------------------------------------------------------
@@ -164,3 +167,40 @@ v_curr + v_nn +
                                                             size = 9)))
 ggsave("out/plots/MWI_TXTrends.png",
        dpi = 330, width = 10, height = 7)
+
+
+#alt plot
+
+df_combo %>% 
+  select(-TX_NEW) %>% 
+  gather(indicator, val, -primepartner, -period) %>% 
+  ggplot(aes(period, val, fill = indicator)) +
+  geom_hline(yintercept = 0) +
+  geom_blank(aes(y = val * 1.3)) +
+  expand_limits(y = -40000) + 
+  geom_col() +
+  geom_text(aes(label = comma(val, 1),
+                vjust = ifelse(val <0, 1, -1)),
+            color = "gray30",
+            family = "Calibri Light", size = 3) +
+  facet_grid(primepartner ~ indicator, switch = "y") +
+  scale_fill_manual(values = c(pal[1], pal[2])) +
+  labs(x = NULL, y = NULL,
+       title = 'TRACKING PARTNER TREATMENT TRENDS',
+       subtitle = "FY18Q4-FY20Q1 | Malawi",
+       caption = "Note: NET_NEW calculated by site, agnostic to partner 
+                  Source: MWI DHA (before FY19Q4) + MSD (FY19Q4 + FY20Q1)") +
+  theme_minimal() +
+  theme(text = element_text(family = "Calibri Light"),
+        strip.text = element_text(family = "Calibri", size = 12, face = "bold"),
+        strip.text.y = element_text(angle = 180),
+        axis.text.y = element_blank(),
+        panel.grid = element_blank(),
+        title = element_text(family = "Calibri", size = 13, face = "bold"),
+        plot.subtitle = element_text(family = "Calibri", size = 11),
+        plot.caption = element_text(family = "Calibri Light", color = "gray30", size = 9),
+        legend.position = "none")
+
+ggsave("out/plots/MWI_TXTrends_v2.png",
+       dpi = 330, width = 10, height = 7)
+
