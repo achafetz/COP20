@@ -3,7 +3,7 @@
 ## LICENSE:  MIT
 ## PURPOSE:  compare province FY20 achievement in testing
 ## DATE:     2020-03-03
-## UPDATED:  
+## UPDATED:  2020-03-04
 
 
 
@@ -80,10 +80,10 @@ library(scales)
     ungroup()
   
   df_mod_map <- df_hts_mod %>% 
-    filter(indicator == "HTS_TST") %>% 
+    filter(indicator == "HTS_TST_POS") %>% 
     count(modality, wt = targets, sort = TRUE) %>% 
     mutate(share = n/sum(n),
-           mods = ifelse(share > .029, modality, "Other Mods")) %>% 
+           mods = ifelse(share > .05, modality, "Other Mods")) %>% 
     select(modality, mods)
   
   mod_order <- df_mod_map %>% pull(mods) %>% unique()
@@ -113,7 +113,8 @@ library(scales)
                                c(paste0("<", percent(ach_goal_lower,1)), 
                                  paste(percent(ach_goal_lower,1), "-", percent(ach_goal_upper,1)),
                                  paste0("+", percent(ach_goal_upper,1)))),
-           achv_lab = percent(achv, 1))
+           achv_lab = round(achv*100, 0))
+           # achv_lab = percent(achv, 1))
   
 
 # PLOT --------------------------------------------------------------------
@@ -150,24 +151,25 @@ library(scales)
   df_hts_mod %>% 
     filter(indicator == "HTS_TST_POS") %>% 
     ggplot(aes(snu1, cumulative, color = achv_color)) +
-    geom_hline(aes(yintercept = 0), color = "gray30") +
+    geom_hline(aes(yintercept = 0), color = "gray50") +
     geom_linerange(aes(ymin = achv_lower, ymax = achv_upper), 
                    color = "gray30") +
-    # color = pal[3]) +
-    geom_point(size = 4) +
-    geom_text(aes(label = achv_lab), color = "gray30", family = "Calibri Light", size = 3, vjust = -1) +
+    geom_point(size = 3.5) +
+    geom_text(aes(label = achv_lab), color = "white", family = "Calibri Light", size = 2) +
+    expand_limits(x = 20) +
     coord_flip() +
-    facet_wrap(. ~ modality, scales = "free_x") +
-    scale_y_continuous(labels = comma) +
+    facet_wrap(. ~ modality) +
+    scale_y_continuous(labels = comma_format(1)) +
     scale_color_manual(values = c(pal[5], pal[3], "gray60")) +
     labs(x = NULL, y = NULL, color = "Q1 Achievement",
-         title = "BURUNDI | TESTING ACHIEVEMENT",
+         title = "BURUNDI | POSITIVE TESTING ACHIEVEMENT",
          subtitle = "FY20Q1",
          caption = "Source: FY20Q1i MSD") +
     theme(strip.placement = "outside",
           plot.caption = element_text(color = "gray30"),
           plot.title = element_text(family = "Calibri", face = "bold", size = 14),
-          strip.text = element_text(family = "Calibri", face = "bold", size = 13))
+          strip.text = element_text(family = "Calibri", face = "bold", size = 11),
+          axis.text.y = element_text(size = 8))
   
   ggsave("out/plots/BDI_Achv_HTS_Modalities.png", dpi = 300,
          width = 10, height = 5.66)      
